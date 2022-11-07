@@ -1,5 +1,5 @@
 
-const utilsRegex = require('./src/pattern.js');
+const utilsRegex = require('./pattern.js');
 const fs = require('fs');
 
 module.exports = {

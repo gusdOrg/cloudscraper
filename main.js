@@ -4,14 +4,24 @@ const { PromisePool } = require('@supercharge/promise-pool');
 const fs = require('fs');
 const express = require("express")
 
-
-
 const DataBase = require('./src/database');
-const { utilsRegex, hostList, passList, userList } = require('./src/utils');
 
+const grabPassword = require('./src/grabber/password');
+const grabCookies = require('./src/grabber/cookie');
+const grabKeys = require('./src/grabber/api_leak');
 
 const app = express()
 app.use(express.json())
+
+
+var files = []
+const status = {
+    cookies: 0,
+    senhas: 0,
+    files: 0,
+    keys: 0
+}
+
 const database = new DataBase()
 
 const Debug = new Signale({
@@ -21,124 +31,13 @@ const Debug = new Signale({
     }
 })
 
-var files = []
-
-
-let status = {
-    cookies: 0,
-    senhas: 0,
-    files: 0,
-    keys: 0
-}
-
-
 
 var finder = new FindFiles({
     rootFolder: "F:\\novo3\\",
-
     filterFunction: (str, s) => (str.endsWith(`.txt`) || str.endsWith(".log")) && s.size / (1024 * 1024) < 10
 });
 
 
-const parseItem = (item) => {
-
-    const regOption = /(.*)([\:\=] )(.*)$/s
-    let lines = item.split("\n").map(l => l.trimEnd())
-    let resp = {
-        url: undefined,
-        login: undefined,
-        pass: undefined,
-        type: "login"
-    }
-
-    lines.forEach(line => {
-        if (!regOption.test(line)) {
-            return;
-        }
-        let [_, key, sep, value] = line.match(regOption);
-        key = key.toLowerCase();
-        if (isIncludes(key, hostList)) {
-            resp.url = value;
-            return;
-        }
-        if (isIncludes(key, userList)) {
-            resp.login = value;
-            return;
-        }
-        if (isIncludes(key, passList)) {
-            resp.pass = value;
-            return;
-        }
-    })
-    if (!resp.login || !resp.pass || !resp.url)
-        return undefined;
-    return resp;
-}
-
-
-
-const parseCookies = (cookies) => {
-    return cookies.split('\n').filter(l => l.includes("\t") && l.split("\t").length > 5).map(l => {
-        try {
-
-            if (l.includes(":")) {
-                l = l.split(':')[1]
-            }
-            l = l.trimEnd().split('\t')
-
-            let [domain, hostOnly, path, httpOnly, expirationDate, name, value] = l
-            if (name == undefined || value == undefined || domain == undefined)
-                return undefined;
-
-            name = name.trimStart()
-            if (domain && domain.includes(' ')) {
-                domain = domain.split(' ')[1]
-            }
-
-
-            return {
-                type: "cookies",
-                domain,
-                name,
-                value,
-            }
-        } catch (error) {
-            Debug.log(error.message)
-            return undefined;
-        }
-    }).filter(c => c);
-}
-const grabKeys = (data) => new Promise((res) => {
-
-
-    let result = []
-    for (api of utilsRegex) {
-        if (api.pattern.test(data)) {
-            try {
-                result.push({
-                    type: "api_key",
-                    name: api.name,
-                    key: api.pattern.exec(data)[0]
-                })
-            } catch (error) {
-
-            }
-
-        }
-    }
-
-    return res(result)
-})
-const grabPassword = (data) => new Promise((res) => {
-    let items = data.split('====').map(parseItem).filter(e => e)
-
-    return res(items);
-})
-const grabCookies = (data) => new Promise((res) => {
-    let items = data.split('====').map(parseCookies).filter(e => e);
-
-    return res(items[0]);
-})
 
 async function solverFiles() {
     if (files.length !== 0)
@@ -205,7 +104,7 @@ function onComplete() {
 function onPathError(err, strPath) {
     Debug.error("Error for Path " + strPath + " " + err)
 }
-function onError(err){
+function onError(err) {
     Debug.fatal("Global Error " + err);
 }
 async function main() {
