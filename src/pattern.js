@@ -5,8 +5,9 @@ module.exports = [
     },
     {
         name: "MERCADO_PAGO",
-        pattern: /APP_USR[0-9a-zA-Z]*/i
+        pattern: /APP_USR[0-9a-zA-Z]+/i
     },
+    
 
     {
         name:"CIELO MERCHANT ID",
@@ -18,7 +19,7 @@ module.exports = [
     },
     {
         name:"REDE KEY",
-        pattern:/\d{8}\:[0-9aZ]+/i
+        pattern:/\d{8}\:[0-9a-zA-Z]+/i
     },
     {
         name: "AMAZON_AWS",
@@ -44,18 +45,7 @@ module.exports = [
         name: "GOOGLE_OAUTH_ACCESS_TOKEN",
         pattern: /(ya29\\.[0-9A-Za-z\\-_]+)/i
     },
-    {
-        name: "JSON_WEB_TOKEN",
-        pattern: /(eyJ[a-zA-Z0-9]{10,}\.eyJ[a-zA-Z0-9]{10,}\.[a-zA-Z0-9_-]{10,})/i
-    },
-    {
-        name: "MAILCHIMP",
-        pattern: /\W(?:[a-f0-9]{32}(-us[0-9]{1,2}))\W/i
-    },
-    {
-        name: "MAILGUN",
-        pattern: /(key-[0-9a-f]{32})/i
-    },
+   
     {
         name: "PAYPAL",
         pattern: /[\W]{1,2}([E][A-Z]{1}[a-zA-Z0-9_-]{78})[\W]{1,2}$/i
@@ -85,23 +75,6 @@ module.exports = [
         pattern: /(-----BEGIN OPENSSH PRIVATE KEY-----[a-zA-Z0-9\S]{100,}-----END OPENSSH PRIVATE KEY-----)/i
     },
     {
-        name: "SENDGRID_API_KEY",
-        pattern: /(SG\.[a-zA-Z0-9-_]{22}\.[a-zA-Z0-9_-]{43})/i
-    },
-    {
-        name: "SLACK_V2",
-        pattern: /\W(xox[p|b|o|a]-[0-9]{1,}-[0-9]{12}-[0-9]{12}-[a-z0-9]{32})\W/i
-    },
-    {
-        name: "SLACK_V1",
-        pattern: /\W(xox[p|b|o|a]-[0-9]{1,}-[0-9]{1,}-[a-zA-Z0-9]{24})\W/i
-    },
-  
-    {
-        name: "SQUARE_PERSONAL_ACCESS_TOKEN",
-        pattern: /\W(EAAA[a-zA-Z0-9_-]{60})\W/i
-    },
-    {
         name: "STRIPE_LIVE_SECRET_KEY",
         pattern: /(sk_live_[0-9a-zA-Z]+)/i
     },
@@ -119,10 +92,6 @@ module.exports = [
     },
 
     {
-        name: "GOOGLE_URL",
-        pattern: /([0-9]{12}-[a-z0-9]{32}.apps.googleusercontent.com)/i,
-    },
-    {
         name: "TWILIO_SID",
         pattern: /(AC[a-f0-9]{32}[^a-f0-9])/i,
     },
@@ -130,10 +99,7 @@ module.exports = [
         name: "TWILIO_AUTH",
         pattern: /\W[a-f0-9]{32}\W/i
     },
-    {
-        name: "SLACK_TOKEN",
-        pattern: /(xox[pborsa]-[0-9]{12}-[0-9]{12}-[0-9]{12}-[a-z0-9]{32})/i,
-    },
+   
     {
         name: "RSA_PRIVATE_KEY",
         pattern: /-----BEGIN RSA PRIVATE KEY-----/i,
@@ -645,29 +611,10 @@ module.exports = [
         name: "JSON_WEB_TOKEN",
         pattern: /ey[A-Za-z0-9_-]*\.[A-Za-z0-9._-]*|ey[A-Za-z0-9_\/+-]*\.[A-Za-z0-9._\/+-]*/i
     },
-    {
-        name: "TWITTER_ACCESS_TOKEN",
-        pattern: /[1-9][ 0-9]+-[0-9a-zA-Z]{40}/
-    },
-    {
-        name: "TWITTER_USERNAME",
-        pattern: /(^|[^@\w])@(\w{1,15})\b/i
-    },
+    
     {
         name: "FACEBOOK_O_AUTH_2_0",
         pattern: /[A-Za-z0-9]{125} (counting letters [2])/i
-    },
-    {
-        name: "INSTAGRAM_O_AUTH_2_0",
-        pattern: /[0-9a-fA-F]{7}\.[0-9a-fA-F]{32}/i
-    },
-    {
-        name: "INSTAGRAM_USERNAME",
-        pattern: /(?:@)([A-Za-z0-9_](?:(?:[A-Za-z0-9_]|(?:\.(?!\.))){0,28}(?:[A-Za-z0-9_]))?)/i
-    },
-    {
-        name: "INSTAGRAM_HASHTAG",
-        pattern: /(?:#)([A-Za-z0-9_](?:(?:[A-Za-z0-9_]|(?:\.(?!\.))){0,28}(?:[A-Za-z0-9_]))?)/i
     },
     {
         name: "GOOGLE_API_KEY",
