@@ -1,7 +1,13 @@
 # Cloudlog-Scraper
 Scaneia arquivos de logs antigos, colhe todos cookies, logins, api keys
 
-**  Install **
+
+Scan:
+  - Cookies
+  - Login
+  - Keys (STRIPE AUTH, AWS , TWILIO....)
+
+##  Install
 ```
 git clone https://github.com/gusdOrg/cloudscraper
 cd cloudscraper && npm i
