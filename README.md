@@ -7,6 +7,10 @@ Scan:
   - Login
   - Keys (STRIPE AUTH, AWS , TWILIO....)
 
+
+## Configure
+  º Edit main.js change local folder main logs.
+
 ##  Install
 ```
 git clone https://github.com/gusdOrg/cloudscraper
